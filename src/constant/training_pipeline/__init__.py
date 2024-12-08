@@ -1,5 +1,6 @@
 import os
 import sys 
+import numpy as np 
 
 """
 Common constant variable 
@@ -35,4 +36,16 @@ DATA_VALIDATION_DRIFT_REPORT_DIR: str = "drift_report"
 DATA_VALIDATION_DRIFT_REPORT_FILE_NAME: str = "report.yaml"
 
 
-
+"""
+Data transformation realated constant start with DATA_TRANSFORMATION VAR NAME
+"""
+DATA_TRANSFORMATION_DIR_NAME: str = "data_transformation"
+DATA_TRANSFORMATION_TRANSFORMED_DIR_NAME: str = "transformed"
+DATA_TRANSFORMATION_TRANSFORMED_OBJECT_DIR:str = "transformed_object"
+PREPROCESSING_OBJECT_FILE_NAME:str = "preprocessing.pkl"
+# using knn imputer 
+DATA_TRANSFORMATION_IMPUTER_PARAMS: dict = {
+    "missing_values": np.nan, 
+    "n_neighbors" : 3, 
+    "weights" : "uniform"
+}
