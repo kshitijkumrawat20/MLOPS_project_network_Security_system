@@ -17,7 +17,8 @@ from sklearn.ensemble import (
 from sklearn.linear_model import LogisticRegression
 from sklearn.metrics import r2_score
 import mlflow 
-
+import dagshub
+dagshub.init(repo_owner='kshitijk146', repo_name='MLOPS_project_network_Security_system', mlflow=True)
 class ModelTrainer:
     def __init__(self, model_trainer_config: Model_trainer_config, data_transformation_artifact: DataTransformationArtifact):
         try:
@@ -114,6 +115,7 @@ class ModelTrainer:
         
         NetwerkModel= NetworkSecurityModel(preprocessing_object=preprocessor, trained_model_object=best_model)
         save_object(self.model_trainer_config.trained_model_file_path, obj=NetwerkModel)
+        save_object("final_model/model.pkl", best_model)
         
         model_trainer_artifact = ModelTrainerArtifact(trained_model_file_path=self.model_trainer_config.trained_model_file_path, train_metric_artifact=classification_train_metric, test_metric_artifact=classification_test_metric)
         logging.info(f"Model trainer artifact: {model_trainer_artifact}")
