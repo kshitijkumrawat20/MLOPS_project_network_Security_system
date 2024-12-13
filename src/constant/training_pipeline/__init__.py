@@ -61,6 +61,4 @@ MODEL_TRAINER_MODEL_NAME:str = "model.pkl"
 MODEL_TRAINER_EXPECTED_SCORE: float = 0.6
 MODEL_TRAINER_OVERFITTING_UNDERFITTING_THRESHOLD: float = 0.05
 
-"""
-Model evaluation realated constant start with DATA_TRANSFORMATION VAR NAME
-"""
+TRAINING_BUCKET_NAME = "networksecuritymodelbucket"
