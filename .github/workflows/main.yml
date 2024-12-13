@@ -6,12 +6,11 @@ on:
       - main
     paths-ignore:
       - 'README.md'
- 
 
 jobs:
   integration:
     name: Continuous Integration
-    runs-on: ubuntu-lates
+    runs-on: ubuntu-latest
     steps:
       - name: Checkout Code 
         uses: actions/checkout@v3
@@ -32,7 +31,7 @@ jobs:
     
       - name: Install Utilities
         run: |
-          sudo apt-get updates
+          sudo apt-get update
           sudo apt-get install -y jq unzip
 
       - name: Configure AWS credentials
@@ -41,7 +40,7 @@ jobs:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: ${{ secrets.AWS_REGION }}
+          
       - name: Login to Amazon ECR
         id: login-ecr
         uses: aws-actions/amazon-ecr-login@v1
-
