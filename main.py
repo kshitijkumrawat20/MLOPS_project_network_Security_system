@@ -16,7 +16,7 @@ if __name__ == "__main__":
         logging.info("Data ingestion started")
         data_ingestion_artifacts = Data_ingestion.initiate_data_ingestion()
         logging.info("Data ingestion completed")
-
+        print("Data ingestion completed")
         
         data_validation_config = Data_validation_config(traingning_pipeline_config)
         Data_validation = DataValidation(data_ingestion_artifacts, data_validation_config)
