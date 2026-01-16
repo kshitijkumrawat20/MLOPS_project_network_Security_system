@@ -24,6 +24,9 @@ COPY --chown=user . /app
 # Create necessary directories
 RUN mkdir -p /app/data /app/final_model /app/templates
 
+# run the load_data_to_sqlite.py script to initialize the database
+RUN python src/data/load_data_to_sqlite.py
+
 # Expose port 7860 (HF Space requirement)
 EXPOSE 7860
 

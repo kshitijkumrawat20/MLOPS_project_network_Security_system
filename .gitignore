@@ -11,4 +11,3 @@ logs/
 Artifacts/
 s3_sync_folder/
 final_model/
-data/
