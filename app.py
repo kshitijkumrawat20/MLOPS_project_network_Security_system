@@ -81,18 +81,21 @@ async def training_route():
                 logging.info("Triggering training via Prefect Cloud...")
                 import sys
                 sys.path.append('/app')
+                
+                # Import and run flow directly (will auto-sync to Prefect Cloud)
                 from prefect_flows.training_flow import training_flow
                 
-                # Run the flow synchronously
-                result = training_flow()
-                logging.info(f"Training flow completed: {result}")
+                # Run the flow - it will automatically log to Prefect Cloud
+                flow_state = training_flow()
+                logging.info(f"Training flow completed with state: {flow_state}")
                 
-                return Response(f"✅ Training completed via Prefect Cloud!\n\nCheck dashboard: https://app.prefect.cloud/account/{os.getenv('PREFECT_WORKSPACE', 'kshitij/default')}/flow-runs")
+                return Response(f"✅ Training completed via Prefect Cloud!\n\nCheck dashboard: https://app.prefect.cloud/\n\nFlow State: {flow_state}")
             except Exception as prefect_error:
                 logging.error(f"Prefect training failed: {str(prefect_error)}", exc_info=True)
-                return Response(f"❌ Prefect training failed: {str(prefect_error)}\n\nFalling back to direct training...")
+                # Don't fallback - show the error
+                raise NetworkSecurityException(prefect_error, sys)
         
-        # Fallback: Direct training (only if Prefect not enabled)
+        # Direct training if Prefect not enabled
         logging.info("Running direct training (Prefect not enabled)")
         training_pipeline = Trainingpipeline()
         training_pipeline.run_pipeline()
