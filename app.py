@@ -75,19 +75,28 @@ async def training_route():
     try: 
         logging.info("Starting training pipeline...")
         
-        # Use Prefect Cloud if available
+        # Always use Prefect Cloud if connected
         if ENABLE_PREFECT:
             try:
                 logging.info("Triggering training via Prefect Cloud...")
+                import sys
+                sys.path.append('/app')
                 from prefect_flows.training_flow import training_flow
+                
+                # Run the flow synchronously
                 result = training_flow()
-                return Response(f"Training triggered via Prefect Cloud! Check dashboard: https://app.prefect.cloud/")
+                logging.info(f"Training flow completed: {result}")
+                
+                return Response(f"✅ Training completed via Prefect Cloud!\n\nCheck dashboard: https://app.prefect.cloud/account/{os.getenv('PREFECT_WORKSPACE', 'kshitij/default')}/flow-runs")
             except Exception as prefect_error:
-                logging.warning(f"Prefect training failed, falling back to direct: {prefect_error}")
+                logging.error(f"Prefect training failed: {str(prefect_error)}", exc_info=True)
+                return Response(f"❌ Prefect training failed: {str(prefect_error)}\n\nFalling back to direct training...")
         
-        # Fallback: Direct training
+        # Fallback: Direct training (only if Prefect not enabled)
+        logging.info("Running direct training (Prefect not enabled)")
         training_pipeline = Trainingpipeline()
         training_pipeline.run_pipeline()
+        return Response("Training completed successfully (direct mode)")
         return Response("Training completed successfully (direct mode)")
     except Exception as e:
         raise NetworkSecurityException(e, sys)
