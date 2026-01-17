@@ -11,6 +11,10 @@ from fastapi.responses import Response
 from starlette.responses import RedirectResponse
 import pandas as pd
 from src.utils.ml_utils.model.estimator import NetworkSecurityModel
+from prometheus_fastapi_instrumentator import Instrumentator
+import time
+from prometheus_client import Counter, Histogram, Gauge
+
 ca = certifi.where()
 load_dotenv()
 mongo_db_uri = os.getenv("MONGO_DB_URI")
@@ -26,6 +30,16 @@ from src.utils.main_utils.utils import load_object
 from fastapi.templating import Jinja2Templates
 templates = Jinja2Templates(directory="./templates")  
 app = FastAPI()
+
+# Prometheus metrics
+prediction_counter = Counter('phishing_predictions_total', 'Total number of predictions', ['result'])
+prediction_latency = Histogram('phishing_prediction_latency_seconds', 'Prediction latency in seconds')
+phishing_detected = Gauge('phishing_threats_detected', 'Number of phishing threats detected')
+safe_sites = Gauge('safe_sites_count', 'Number of safe sites detected')
+
+# Initialize Prometheus instrumentation
+Instrumentator().instrument(app).expose(app)
+
 orgin = ["*"]
 
 app.add_middleware(
@@ -51,7 +65,9 @@ async def training_route():
 
 @app.post("/predict") # predict route
 async def predict_route(request: Request, file: UploadFile =File(...)):
-    try: 
+    try:
+        start_time = time.time()
+        
         df = pd.read_csv(file.file)
         # Remove target column if it exists
         if 'Result' in df.columns:
@@ -65,6 +81,20 @@ async def predict_route(request: Request, file: UploadFile =File(...)):
         df['predicted_column'] = y_pred
         print(df['predicted_column'])
         df.to_csv("final_model/predicted.csv")
+        
+        # Update Prometheus metrics
+        phishing_count = (y_pred == 1).sum()
+        safe_count = (y_pred == 0).sum()
+        
+        prediction_counter.labels(result='phishing').inc(phishing_count)
+        prediction_counter.labels(result='safe').inc(safe_count)
+        phishing_detected.set(phishing_count)
+        safe_sites.set(safe_count)
+        
+        # Record latency
+        latency = time.time() - start_time
+        prediction_latency.observe(latency)
+        
         table_html = df.to_html(classes = 'table table-striped')
         return templates.TemplateResponse("table.html", {"request": request, "table": table_html})
     

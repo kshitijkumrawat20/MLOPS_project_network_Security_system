@@ -11,3 +11,4 @@ logs/
 Artifacts/
 s3_sync_folder/
 final_model/
+MLOPS_SETUP.md

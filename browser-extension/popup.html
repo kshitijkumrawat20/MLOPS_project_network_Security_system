@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Phishing Shield</title>
+  <link rel="stylesheet" href="popup.css">
+</head>
+<body>
+  <div class="container">
+    <!-- Header -->
+    <div class="header">
+      <div class="logo">
+        <svg width="32" height="32" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M12 2L3 7V12C3 16.55 6.84 20.74 12 22C17.16 20.74 21 16.55 21 12V7L12 2Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          <path d="M9 12L11 14L15 10" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+        <h1>Shield</h1>
+      </div>
+      <p class="subtitle">Phishing Protection</p>
+    </div>
+    
+    <!-- Current Site Status -->
+    <div class="status-card">
+      <div id="status-container">
+        <div class="loading">
+          <div class="spinner"></div>
+          <span>Analyzing...</span>
+        </div>
+      </div>
+      <p id="current-url" class="url-display"></p>
+    </div>
+
+    <!-- Manual Check -->
+    <div class="manual-check">
+      <div class="input-group">
+        <input type="text" id="url-input" placeholder="Enter URL to check..." />
+        <button id="check-btn">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <circle cx="11" cy="11" r="8" stroke="currentColor" stroke-width="2"/>
+            <path d="M21 21L16.65 16.65" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+          </svg>
+          Check
+        </button>
+      </div>
+      <div id="manual-result"></div>
+    </div>
+
+    <!-- Stats -->
+    <div class="stats-grid">
+      <div class="stat-card">
+        <div class="stat-value" id="sites-checked">0</div>
+        <div class="stat-label">Checked</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-value" id="threats-blocked">0</div>
+        <div class="stat-label">Blocked</div>
+      </div>
+    </div>
+  </div>
+
+  <script src="popup.js"></script>
+</body>
+</html>

@@ -18,6 +18,9 @@ from sklearn.linear_model import LogisticRegression
 from sklearn.metrics import r2_score
 import mlflow 
 import dagshub
+import os 
+from dotenv import load_dotenv
+load_dotenv()
 dagshub.init(repo_owner='kshitijk146', repo_name='MLOPS_project_network_Security_system', mlflow=True)
 class ModelTrainer:
     def __init__(self, model_trainer_config: Model_trainer_config, data_transformation_artifact: DataTransformationArtifact):
