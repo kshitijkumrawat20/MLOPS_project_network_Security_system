@@ -11,9 +11,16 @@ from fastapi.responses import Response
 from starlette.responses import RedirectResponse
 import pandas as pd
 from src.utils.ml_utils.model.estimator import NetworkSecurityModel
-from prometheus_fastapi_instrumentator import Instrumentator
-import time
-from prometheus_client import Counter, Histogram, Gauge
+
+# Initialize cloud configuration
+try:
+    from cloud_config import initialize_monitoring, ENABLE_PREFECT
+    cloud_status = initialize_monitoring()
+    logging.info(f"Cloud MLOps initialized: {cloud_status}")
+except Exception as e:
+    logging.warning(f"Cloud config initialization failed: {e}")
+    ENABLE_PREFECT = False
+    cloud_status = {"prefect": False, "evidently": False}
 
 ca = certifi.where()
 load_dotenv()
@@ -31,15 +38,6 @@ from fastapi.templating import Jinja2Templates
 templates = Jinja2Templates(directory="./templates")  
 app = FastAPI()
 
-# Prometheus metrics
-prediction_counter = Counter('phishing_predictions_total', 'Total number of predictions', ['result'])
-prediction_latency = Histogram('phishing_prediction_latency_seconds', 'Prediction latency in seconds')
-phishing_detected = Gauge('phishing_threats_detected', 'Number of phishing threats detected')
-safe_sites = Gauge('safe_sites_count', 'Number of safe sites detected')
-
-# Initialize Prometheus instrumentation
-Instrumentator().instrument(app).expose(app)
-
 orgin = ["*"]
 
 app.add_middleware(
@@ -54,9 +52,40 @@ app.add_middleware(
 # async def index():
 #     return RedirectResponse(url="/docs")
 
+@app.get("/")
+async def root():
+    """Root endpoint with system status"""
+    return {
+        "status": "running",
+        "service": "Network Security System - Phishing Detection",
+        "cloud_mlops": {
+            "prefect_cloud": "enabled" if cloud_status.get("prefect") else "disabled",
+            "evidently": "cloud" if cloud_status.get("evidently") else "open-source",
+            "monitoring": "enabled" if cloud_status.get("monitoring") else "disabled"
+        },
+        "endpoints": {
+            "docs": "/docs",
+            "train": "/train",
+            "predict": "/predict"
+        }
+    }
+
 @app.get("/train")
 async def training_route():
     try: 
+        logging.info("Starting training pipeline...")
+        
+        # Option 1: Use Prefect Cloud if available
+        if ENABLE_PREFECT and os.getenv("USE_PREFECT_FOR_TRAINING", "false").lower() == "true":
+            try:
+                logging.info("Triggering training via Prefect Cloud...")
+                from prefect_flows.training_flow import training_flow
+                result = training_flow()
+                return Response(f"Training triggered via Prefect Cloud! Check dashboard for status.")
+            except Exception as prefect_error:
+                logging.warning(f"Prefect training failed, falling back to direct: {prefect_error}")
+        
+        # Option 2: Direct training (default)
         training_pipeline = Trainingpipeline()
         training_pipeline.run_pipeline()
         return Response("Training successfull !!")
@@ -66,8 +95,6 @@ async def training_route():
 @app.post("/predict") # predict route
 async def predict_route(request: Request, file: UploadFile =File(...)):
     try:
-        start_time = time.time()
-        
         df = pd.read_csv(file.file)
         # Remove target column if it exists
         if 'Result' in df.columns:
@@ -81,19 +108,6 @@ async def predict_route(request: Request, file: UploadFile =File(...)):
         df['predicted_column'] = y_pred
         print(df['predicted_column'])
         df.to_csv("final_model/predicted.csv")
-        
-        # Update Prometheus metrics
-        phishing_count = (y_pred == 1).sum()
-        safe_count = (y_pred == 0).sum()
-        
-        prediction_counter.labels(result='phishing').inc(phishing_count)
-        prediction_counter.labels(result='safe').inc(safe_count)
-        phishing_detected.set(phishing_count)
-        safe_sites.set(safe_count)
-        
-        # Record latency
-        latency = time.time() - start_time
-        prediction_latency.observe(latency)
         
         table_html = df.to_html(classes = 'table table-striped')
         return templates.TemplateResponse("table.html", {"request": request, "table": table_html})

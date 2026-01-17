@@ -10,5 +10,5 @@ logs/
 *.log
 Artifacts/
 s3_sync_folder/
-final_model/
 MLOPS_SETUP.md
+final_model/
