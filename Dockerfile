@@ -22,20 +22,13 @@ RUN pip install --no-cache-dir --upgrade -r requirements.txt
 COPY --chown=user . /app
 
 # Create necessary directories
-RUN mkdir -p /app/data /app/final_model /app/templates /app/monitoring/reports /app/prefect_flows
-
-# Make startup script executable
-RUN chmod +x /app/startup.sh
+RUN mkdir -p /app/data /app/final_model /app/templates
 
 # run the load_data_to_sqlite.py script to initialize the database
 RUN python load_data_to_sqlite.py
 
-# Run cloud configuration check (non-blocking)
-RUN python cloud_config.py || echo "Cloud config check completed"
-
 # Expose port 7860 (HF Space requirement)
 EXPOSE 7860
 
-# Use startup script to initialize cloud services, then start app
-ENTRYPOINT ["/app/startup.sh"]
+# Run the application
 CMD ["uvicorn", "app:app", "--host", "0.0.0.0", "--port", "7860"]

@@ -12,16 +12,6 @@ from starlette.responses import RedirectResponse
 import pandas as pd
 from src.utils.ml_utils.model.estimator import NetworkSecurityModel
 
-# Initialize cloud configuration
-try:
-    from cloud_config import initialize_monitoring, ENABLE_PREFECT
-    cloud_status = initialize_monitoring()
-    logging.info(f"Cloud MLOps initialized: {cloud_status}")
-except Exception as e:
-    logging.warning(f"Cloud config initialization failed: {e}")
-    ENABLE_PREFECT = False
-    cloud_status = {"prefect": False, "evidently": False}
-
 ca = certifi.where()
 load_dotenv()
 mongo_db_uri = os.getenv("MONGO_DB_URI")
@@ -58,11 +48,6 @@ async def root():
     return {
         "status": "running",
         "service": "Network Security System - Phishing Detection",
-        "cloud_mlops": {
-            "prefect_cloud": "enabled" if cloud_status.get("prefect") else "disabled",
-            "evidently": "cloud" if cloud_status.get("evidently") else "open-source",
-            "monitoring": "enabled" if cloud_status.get("monitoring") else "disabled"
-        },
         "endpoints": {
             "docs": "/docs",
             "train": "/train",
@@ -74,18 +59,9 @@ async def root():
 async def training_route():
     try: 
         logging.info("Starting training pipeline...")
-        
-        # Run training directly - Prefect Cloud monitoring happens in prefect_flows if needed
         training_pipeline = Trainingpipeline()
         training_pipeline.run_pipeline()
-        
-        status_msg = "✅ Training completed successfully!"
-        if ENABLE_PREFECT:
-            status_msg += "\n\n📊 Prefect Cloud connected - Run flows via prefect_flows/ directory"
-            status_msg += "\n   Dashboard: https://app.prefect.cloud/"
-        
-        return Response(status_msg)
-        return Response("Training completed successfully (direct mode)")
+        return Response("Training completed successfully!")
     except Exception as e:
         raise NetworkSecurityException(e, sys)
 

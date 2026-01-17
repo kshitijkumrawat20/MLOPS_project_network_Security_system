@@ -11,8 +11,4 @@ dagshub
 fastapi 
 uvicorn 
 python-multipart
-# Orchestration
-prefect>=2.14.0
-# Monitoring
-evidently>=0.4.0
 # -e .
