@@ -12,3 +12,6 @@ Artifacts/
 s3_sync_folder/
 MLOPS_SETUP.md
 final_model/
+.env/
+__pypackages__/
+.env
