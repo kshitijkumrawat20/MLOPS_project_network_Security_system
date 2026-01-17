@@ -23,10 +23,40 @@ class PhishingModelMonitor:
         self.reference_data = pd.read_csv(reference_data_path)
         self.reports_dir = "monitoring/reports"
         os.makedirs(self.reports_dir, exist_ok=True)
+        
+        # Check for Evidently Cloud integration
+        self.evidently_cloud_token = os.getenv("EVIDENTLY_CLOUD_TOKEN") or os.getenv("EVIDENTLY_API_KEY")
+        self.evidently_project_id = os.getenv("EVIDENTLY_PROJECT_ID") or "nss"  # Default to "nss"
+        self.use_evidently_cloud = self.evidently_cloud_token is not None
+        
+        if self.use_evidently_cloud:
+            print(f"✅ Evidently Cloud integration enabled (Project: {self.evidently_project_id})")
+            try:
+                from evidently.ui.workspace.cloud import CloudWorkspace
+                # Initialize Evidently Cloud workspace
+                self.workspace = CloudWorkspace(
+                    token=self.evidently_cloud_token,
+                    url="https://app.evidently.cloud"
+                )
+                # Get or create project
+                try:
+                    self.project = self.workspace.get_project(self.evidently_project_id)
+                    print(f"✅ Connected to Evidently Cloud project: {self.evidently_project_id}")
+                except:
+                    # Project might be referenced by name, try to find it
+                    print(f"📦 Looking for project: {self.evidently_project_id}")
+                    self.project = None  # Will create reports without project reference
+                
+            except Exception as e:
+                print(f"⚠️  Evidently Cloud setup warning: {e}")
+                self.use_evidently_cloud = False
+        else:
+            print("ℹ️  Using Evidently open-source (local reports only)")
     
     def generate_data_drift_report(self, current_data: pd.DataFrame):
         """
         Generate data drift report comparing current data with reference
+        Saves locally AND pushes to Evidently Cloud if enabled
         
         Args:
             current_data: Recent prediction data
@@ -45,10 +75,18 @@ class PhishingModelMonitor:
             current_data=current_data
         )
         
-        # Save report
+        # Save local HTML report
         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
         report_path = f"{self.reports_dir}/drift_report_{timestamp}.html"
         report.save_html(report_path)
+        
+        # Push to Evidently Cloud if enabled
+        if self.use_evidently_cloud and self.project:
+            try:
+                self.workspace.add_report(self.project.id, report)
+                print(f"✅ Report pushed to Evidently Cloud: {self.evidently_project_id}")
+            except Exception as e:
+                print(f"⚠️  Failed to push to Evidently Cloud: {e}")
         
         # Extract metrics
         report_json = report.as_dict()
